@@ -6,7 +6,7 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from to_do_list import DATABASE_URL
+from to_do_list.settings import DATABASE_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -16,7 +16,7 @@ config.set_main_option("sqlalchemy.url", DATABASE_URL)
 exclude_tables = config.get_main_option("exclude", "").split(",")
 
 
-def include_object(object, name, type_, *args, **kwargs): # noqa
+def include_object(object, name, type_, *args, **kwargs):  # noqa
     if type_ == "table" and name in exclude_tables:
         print(name)
         return False
