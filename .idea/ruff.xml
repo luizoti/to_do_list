@@ -2,7 +2,7 @@
 <project version="4">
   <component name="RuffConfigService">
     <option name="globalRuffExecutablePath" value="/snap/bin/ruff" />
-    <option name="runRuffOnSave" value="true" />
+    <option name="runRuffOnReformatCode" value="false" />
     <option name="useRuffFormat" value="true" />
     <option name="useRuffServer" value="true" />
   </component>
