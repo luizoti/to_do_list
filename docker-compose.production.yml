@@ -1,0 +1,18 @@
+services:
+  to_to_list:
+    extends:
+      file: docker-compose.common.yml
+      service: to_to_list
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=PRODUCTION
+      - DEBUG=False
+    restart: always
+
+
+networks:
+  to_to_network:
+
+volumes:
+  to_to_volume:

@@ -1,0 +1,34 @@
+services:
+  to_to_list:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: to_do_app
+    hostname: to_do_app
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Sao_Paulo
+    volumes:
+      - .:/home/app/app:rw
+    networks:
+      - to_to_network
+    restart: on-failure
+
+  postgres:
+    image: postgres:13
+    hostname: postgres
+    shm_size: 128mb
+    ports:
+      - "5432:5432"
+    restart: on-failure
+    env_file:
+      - .env
+    networks:
+      - to_to_network
+
+networks:
+  to_to_network:
+
+volumes:
+  to_to_volume:

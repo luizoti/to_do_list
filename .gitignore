@@ -1,0 +1,18 @@
+[core]
+    excludesFile = ~/.gitignore
+
+/tests.db
+/*.pyc
+*.session
+*.session-journal
+/2024/
+/__pycache__
+*.pyc
+**/*.pyc
+/logs/*
+/media_root/*
+/media_root/zips/2024/7.zip
+/media_root/zips/2024/2024_07.zip
+/to_to_table/.env
+*.png
+/.env

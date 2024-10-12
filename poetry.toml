@@ -1,0 +1,7 @@
+[installer]
+max-workers = 4
+parallel = true
+
+[virtualenvs]
+create = true
+in-project = false
