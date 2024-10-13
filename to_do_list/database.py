@@ -1,14 +1,11 @@
 """Modulo with database models and settings."""
 
-from enum import Enum
-
 from sqlalchemy import (
     create_engine,
     Integer,
     Column,
     DateTime,
-    String,
-    Boolean
+    String
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -32,31 +29,15 @@ def session_clear(exception=None):
 session_clear()
 
 
-class TaskStates(Enum):
-    """Task states."""
-    PENDENTE = 0
-    CONCLUIDA = 1  # noqa
-    EM_PROGRESSO = 2
-
-
-class TaskPrioritys(Enum):
-    """Task prioritys."""
-    BAIXA = 0
-    MEDIA = 1
-    ALTA = 2
-
-
 class Tasks(Base):
     __tablename__ = "Tasks"
     id = Column(Integer, primary_key=True, name="id", comment="ID da task")
     created_at = Column(DateTime, nullable=False, name="created_at", comment="Data de Criação")
     title = Column(String, nullable=False, name="title", comment="Titulo")
-    description = Column(String, nullable=False, name="description", comment="Descrição")
     priority = Column(Integer, nullable=False, name="priority", comment="Prioridade")
     completion_date = Column(DateTime, nullable=False, name="completion_date", comment="Data de conclusão")
-    category = Column(String, nullable=False, name="category", comment="Categoria")
     order = Column(Integer, nullable=False, name="order", comment="Ordem")
-    concluded = Column(Boolean, nullable=False, name="concluded", comment="Concluída")
+    status = Column(Integer, nullable=False, name="status", comment="Status")
 
 
 Base.metadata.create_all(engine)
@@ -92,8 +73,14 @@ class TasksManager:
             if not obj:
                 return {"success": False, "message": "Object not found."}
 
-            for key, value in kwargs.items():
-                setattr(obj, key, value)
+            if "order" in kwargs:
+                current_task = session.query(Tasks).filter_by(id=obj_id).first()
+                next_task = session.query(Tasks).filter_by(order=kwargs["order"]).first()
+                next_task.order = current_task.order
+                current_task.order = kwargs["order"]
+            else:
+                for key, value in kwargs.items():
+                    setattr(obj, key, value)
 
             session.commit()
             return cls._to_dict(obj)
@@ -130,7 +117,7 @@ class TasksManager:
     def all(cls):
         """Retrieve all instances of the model and return them as a list of dicts."""
         try:
-            objects = session.query(cls.model).all()
+            objects = session.query(cls.model).order_by(cls.model.order).all()
             return [cls._to_dict(obj) for obj in objects]
         except SQLAlchemyError as e:
             return {"success": False, "message": str(e)}
