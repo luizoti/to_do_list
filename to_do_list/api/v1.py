@@ -34,6 +34,9 @@ class BaseViewSet:
 
     async def create(self, item_data: Dict):
         """POST /: Create a new instance."""
+        item_data.update({"created_at": datetime.now(),
+                          "order": max([x.get("order") for x in self.manager.all()]) + 1,
+                          "status": 0})
         result = self.manager.create(**item_data)
         if not result:
             raise HTTPException(status_code=400)
