@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from to_do_list.api.v1 import ROUTER
+from to_do_list.database import TasksManager
+from to_do_list.faked import faked_tasks
 
 # from to_to_list.database import ImageHistoryManager, session_clear
 
@@ -52,6 +54,15 @@ async def index(request: Request):
     return templates.TemplateResponse(
         request=request, name="index.html"
     )
+
+
+@FAST_API_APP.get("/include_faked")
+async def include_faked_tasks(request: Request):
+    """Application index page."""
+    task_manager = TasksManager
+    for item in faked_tasks:
+        task_manager.create(**item)
+    return task_manager.all()
 
 
 FAST_API_APP.include_router(ROUTER)
