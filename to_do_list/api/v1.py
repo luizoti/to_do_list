@@ -1,8 +1,10 @@
+from datetime import datetime
 from typing import Dict
 
 from fastapi import APIRouter, HTTPException
 
 from to_do_list.database import Tasks, TasksManager
+from to_do_list.enums import TASK_PRIORITYS, TASK_STATES
 
 ROUTER = APIRouter()
 
@@ -20,7 +22,6 @@ class BaseViewSet:
     async def list(self):
         """GET /: List all instances."""
         result = self.manager.all()
-        print(result)
         if not result:
             raise HTTPException(status_code=400)
         return result
@@ -56,6 +57,16 @@ class BaseViewSet:
             raise HTTPException(status_code=404)
         return {"message": result['message']}
 
+    @staticmethod
+    async def states():
+        """GET /: List task states."""
+        return TASK_STATES
+
+    @staticmethod
+    async def priorities():
+        """GET /: List task prioritys."""
+        return TASK_PRIORITYS
+
 
 # Exemplo de ViewSet para Tasks
 class TaskViewSet(BaseViewSet):
@@ -64,8 +75,11 @@ class TaskViewSet(BaseViewSet):
 
 
 task_viewset = TaskViewSet()
-ROUTER.add_api_route("/tasks", task_viewset.list, methods=["GET"])
-ROUTER.add_api_route("/tasks/{obj_id}", task_viewset.retrieve, methods=["GET"])
-ROUTER.add_api_route("/tasks", task_viewset.create, methods=["POST"])
-ROUTER.add_api_route("/tasks/{obj_id}", task_viewset.update, methods=["PUT"])
-ROUTER.add_api_route("/tasks/{obj_id}", task_viewset.delete, methods=["DELETE"])
+ROUTER.add_api_route("/tasks", task_viewset.list, methods=["GET"], tags=["task"])
+ROUTER.add_api_route("/tasks/{obj_id}", task_viewset.retrieve, methods=["GET"], tags=["task"])
+ROUTER.add_api_route("/tasks", task_viewset.create, methods=["POST"], tags=["task"])
+ROUTER.add_api_route("/tasks/{obj_id}", task_viewset.update, methods=["PUT"], tags=["task"])
+ROUTER.add_api_route("/tasks/{obj_id}", task_viewset.delete, methods=["DELETE"], tags=["task"])
+
+ROUTER.add_api_route("/states", task_viewset.states, methods=["GET"], tags=["constraints"])
+ROUTER.add_api_route("/priorities", task_viewset.priorities, methods=["GET"], tags=["constraints"])
