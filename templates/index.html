@@ -5,13 +5,470 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>To-Do List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h4 {
+            color: #343a40;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .table thead {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .form-outline input,
+        .form-outline select {
+            min-width: 250px;
+        }
+
+        .tooltip-inner {
+            background-color: #343a40;
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
-    <h2 class="mb-4">Bootstrap Table</h2>
-    {{ html|safe }}
+    <div class="py-5">
+        <div class="card rounded-3">
+            <div class="card-body p-5">
+                <h4 class="text-center mb-4">To-Do List</h4>
 
+                <form id="task-form">
+                    <div class="row row-cols-lg-auto g-3 justify-content-center align-items-center mb-4">
+                        <div class="col-12">
+                            <div class="form-outline">
+                                <input type="text" id="form1" class="form-control" placeholder="Enter a task here"
+                                       aria-label="Enter a task">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <input
+                                    class="form-control"
+                                    type="datetime-local"
+                                    id="closing-date"
+                                    name="closing-date"
+                                    placeholder="Closing Date and Time"/>
+                        </div>
+                        <div class="col-12">
+                            <select class="form-select" aria-label="Task priorities" id="task-priorities">
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Save Task">Save
+                            </button>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="button" class="btn btn-warning" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Retrieve Tasks" onclick="updateTasks()">Get Tasks
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="text-center">
+                        <tr>
+                            <th scope="col">No.</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Task (Double Click to Edit)</th>
+                            <th scope="col">Closing Date</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
+                            <th scope="col">Move</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tasks-table-body">
+                        <!-- Dynamic rows will be appended here -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let statusArray = null
+    let priorityArray = null
+
+    // Function to format date to human-readable format
+    function formatDate(dateString) {
+
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        };
+        return new Date(dateString).toLocaleString('en-US', options);
+    }
+
+    function buildTask(taskID, order, createdAt, title, closingDate, priority, status) {
+
+        let taskRow = document.createElement("tr");
+        taskRow.setAttribute("data-order", order);
+        taskRow.setAttribute("id", taskID);
+
+        let taskOrder = document.createElement("th");
+        taskOrder.innerHTML = order;
+        taskOrder.setAttribute("scope", "row");
+
+        let taskCreatedAt = document.createElement("td");
+        taskCreatedAt.innerHTML = formatDate(createdAt);
+
+        let taskTitle = document.createElement("td");
+        taskTitle.innerHTML = title;
+        taskTitle.ondblclick = (event) => {
+            // Create a container div for input and buttons
+            let mainDiv = document.createElement("div");
+            mainDiv.style.display = "flex";  // Use flexbox to align elements horizontally
+            mainDiv.style.gap = "10px";      // Add some spacing between elements
+
+            // Create input element
+            let editTitle = document.createElement("input");
+            editTitle.type = "text";
+            editTitle.setAttribute("id", "form1");
+            editTitle.setAttribute("class", "form-control");
+            editTitle.value = taskTitle.innerText;
+
+            // Create the “Accept” button
+            let okButton = document.createElement("button");
+            okButton.setAttribute("class", "btn btn-success");
+            let iElement = document.createElement("i");
+            iElement.setAttribute("class", "bi bi-check-square-fill");  // Bootstrap icon
+            okButton.appendChild(iElement);
+
+            // Create "Cancel" button
+            let cancelButton = document.createElement("button");
+            cancelButton.setAttribute("class", "btn btn-danger");
+            let cancelIcon = document.createElement("i");
+            cancelIcon.setAttribute("class", "bi bi-x-square-fill");  // Bootstrap cancel icon
+            cancelButton.appendChild(cancelIcon);
+
+            // Add input and buttons to the mainDiv
+            mainDiv.append(editTitle, okButton, cancelButton);
+
+            // Replace the task title with the new input and buttons
+            taskTitle.replaceWith(mainDiv);
+
+            // Event listeners for “Accept” and “Cancel” buttons
+            okButton.onclick = () => {
+                if (editTitle.value === '') {
+                    alert('Please fill edited title');
+                    return;
+                }
+
+                taskTitle.innerText = editTitle.value;  // Save the new value
+                mainDiv.replaceWith(taskTitle);  // Replace the form with the updated task title
+                editTask(taskID, {title: editTitle.value})
+                alert(`Task title updated: ${editTitle.value}`)
+            };
+
+            cancelButton.onclick = () => {
+                mainDiv.replaceWith(taskTitle);  // Revert to the original title without changes
+            };
+        };
+
+        let dateTimeEditor = document.createElement("input");
+        dateTimeEditor.setAttribute("type", "datetime-local");
+        dateTimeEditor.setAttribute("class", "form-control");
+        dateTimeEditor.setAttribute("id", "closing-date-editor");
+        dateTimeEditor.setAttribute("name", "closing-date-editor");
+        dateTimeEditor.setAttribute("value", closingDate.toString().split(":").slice(0, -1).join(":"));
+        dateTimeEditor.onchange = function () {
+            editTask(taskID, {completion_date: this.value});
+            alert(`Task closing date updated to: ${formatDate(this.value)}`)
+        }
+        let taskClosingDate = document.createElement("td");
+        taskClosingDate.append(dateTimeEditor);
+
+        let editPriority = document.createElement("select");
+        editPriority.setAttribute("class", "form-select form-select-sm")
+        Object.keys(priorityArray).forEach(key => {
+            let option = document.createElement("option");
+            option.value = key;
+            option.text = priorityArray[key];
+            if (key == status) {
+                option.selected = true;
+            }
+            editPriority.append(option);
+        });
+        editPriority.onchange = function () {
+            editTask(taskID, {priority: this.value});
+        }
+        let taskPriority = document.createElement("td");
+        taskPriority.append(editPriority);
+
+        let taskStatus = document.createElement("td");
+        let statusSelect = document.createElement("select");
+        statusSelect.className = 'form-select form-select-sm';
+        statusSelect.setAttribute("aria-label", "Task status");
+        Object.keys(statusArray).forEach(key => {
+            let option = document.createElement("option");
+            option.value = key;
+            option.text = statusArray[key];
+            if (key == status) {
+                option.selected = true;
+            }
+            statusSelect.append(option);
+        });
+        statusSelect.onchange = function () {
+            editTask(taskID, {status: this.value})
+            alert(`Task status updated to: ${statusArray[this.selectedOptions[0].value]}`)
+        };
+        taskStatus.appendChild(statusSelect);
+
+        let buttonsCell = document.createElement("td");
+        buttonsCell.className = "text-center";
+
+        let deleteButton = document.createElement("button");
+        deleteButton.innerHTML = 'Delete';
+        deleteButton.className = 'btn btn-danger btn-sm';
+        deleteButton.onclick = function () {
+            $.ajax({
+                type: "DELETE",
+                url: location.origin + `/tasks/${taskID}`,
+                success: function () {
+                    const taskRow = document.querySelector(`tr[id="${taskID}"]`);
+                    taskRow.parentNode.removeChild(taskRow);
+                },
+                error: function () {
+                    alert("Error deleting task");
+                }
+            });
+        };
+
+        buttonsCell.append(deleteButton);
+
+        // Move buttons (Up and Down)
+        let moveCell = document.createElement("td");
+        moveCell.className = "text-center";
+
+        let upButton = document.createElement("button");
+        upButton.innerHTML = '↑';
+        upButton.className = 'btn btn-secondary btn-sm';
+        upButton.onclick = function () {
+            moveTask(taskRow, "up");
+        };
+
+        let downButton = document.createElement("button");
+        downButton.innerHTML = '↓';
+        downButton.className = 'btn btn-secondary btn-sm ms-2';
+        downButton.onclick = function () {
+            moveTask(taskRow, "down");
+        };
+
+        moveCell.append(upButton, downButton);
+
+        taskRow.append(taskOrder, taskCreatedAt, taskTitle, taskClosingDate, taskPriority, taskStatus, taskStatus, buttonsCell, moveCell);
+        return taskRow;
+    }
+
+    function moveTask(taskRow, direction) {
+        const currentOrder = parseInt(taskRow.getAttribute("data-order"));
+        const rows = Array.from(document.querySelectorAll("#tasks-table-body tr"));
+
+        if (direction === "up" && currentOrder > 1) {
+            // Move up
+            const previousRow = rows.find(row => parseInt(row.getAttribute("data-order")) === currentOrder - 1);
+            taskRow.parentNode.insertBefore(taskRow, previousRow);
+            editTask(taskRow.id, {order: currentOrder - 1})
+        } else if (direction === "down" && currentOrder < rows.length) {
+            // Move down
+            const nextRow = rows.find(row => parseInt(row.getAttribute("data-order")) === currentOrder + 1);
+            taskRow.parentNode.insertBefore(nextRow, taskRow);
+            editTask(taskRow.id, {order: currentOrder + 1})
+        }
+        // Update the orders after move
+        updateTaskOrders();
+        // Send updated order to the server if needed
+    }
+
+    function updateTaskOrders() {
+        const rows = document.querySelectorAll("#tasks-table-body tr");
+        let orderData = [];
+        rows.forEach((row, index) => {
+            row.setAttribute("data-order", index + 1);
+            row.querySelector("th").innerHTML = index + 1;
+            orderData.push({
+                id: row.getAttribute("id"),
+                order: index + 1
+            });
+        });
+    }
+
+    function updateTasks() {
+        $.ajax({
+            type: "GET",
+            url: location.origin + "/tasks",
+            success: function (data) {
+                $("#tasks-table-body").empty(); // Clear existing rows
+                data.forEach((task, index) => {
+                    $("#tasks-table-body").append(buildTask(
+                        task.id,
+                        index + 1,
+                        task.created_at,
+                        task.title,
+                        task.completion_date,
+                        task.priority,
+                        task.status
+                    ));
+                });
+            },
+            error: function () {
+                alert("Error fetching tasks");
+            }
+        });
+    }
+
+    function getPriority() {
+        $.ajax({
+            type: "GET",
+            url: location.origin + "/priorities",
+            success: function (data) {
+                priorityArray = data
+                let taskOption = $("#task-priorities");
+                taskOption.empty(); // Clear existing options
+                let defaultOption = document.createElement("option");
+                defaultOption.text = "Select a priority";
+                defaultOption.setAttribute("disabled", "");
+                defaultOption.setAttribute("selected", "");
+                taskOption.append(defaultOption);
+                for (const [key, value] of Object.entries(data)) {
+                    let option = document.createElement("option");
+                    option.value = key;
+                    option.textContent = value;
+                    taskOption.append(option);
+                }
+            },
+            error: function () {
+                alert("Error fetching priorities");
+            }
+        });
+    }
+
+    // Handle form submission to create a new task
+    document.getElementById('task-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const title = document.getElementById('form1').value.trim();
+        const closingDate = document.getElementById('closing-date').value;
+        const priority = document.getElementById('task-priorities').value;
+        if (title === '' || closingDate === '' || priority === '') {
+            alert('Please fill in all fields');
+            return;
+        }
+        $.ajax({
+            type: "POST",
+            url: location.origin + "/tasks",
+            data: JSON.stringify({
+                title: title,
+                completion_date: closingDate,
+                priority: priority
+            }),
+            contentType: 'application/json',
+            success: function (data) {
+                // Clear the form fields
+                document.getElementById('form1').value = '';
+                document.getElementById('closing-date').value = '';
+                document.getElementById('task-priorities').value = '';
+                // Update the task list
+                updateTasks();
+            },
+            error: function () {
+                alert('Error creating task');
+            }
+        });
+    });
+
+    function getStates() {
+        $.ajax({
+            url: location.origin + "/states",
+            async: false,
+            type: 'GET'
+        }).then(function (data) {
+            statusArray = data;
+        }).fail(function (data) {
+            console.log("Error", data);
+        });
+    }
+
+    function editTask(taskID, editData) {
+        $.ajax({
+            type: "PUT",
+            contentType: 'application/json',
+            dataType: 'json',
+            url: location.origin + `/tasks/${taskID}`,
+            data: JSON.stringify(editData),
+        });
+    }
+
+    $(document).ready(function () {
+        getStates();
+        getPriority();
+        updateTasks();
+    });
+</script>
 </body>
 </html>
