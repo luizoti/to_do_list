@@ -34,7 +34,7 @@ class BaseViewSet:
         except ValueError:
             max_task = 1 + 1
         item_data.update({"created_at": datetime.now(),
-                          "order": max([x.get("order") for x in self.manager.all()]) + 1,
+                          "order": max_task,
                           "status": 0})
         return self.manager.create(**item_data)
 
