@@ -21,34 +21,26 @@ class BaseViewSet:
 
     async def list(self):
         """GET /: List all instances."""
-        result = self.manager.all()
-        if not result:
-            raise HTTPException(status_code=400)
-        return result
+        return self.manager.all()
 
     async def retrieve(self, obj_id: int):
         """GET /{id}: Retrieve a specific instance by ID."""
-        result = self.manager.get(obj_id)
-        if not result:
-            raise HTTPException(status_code=404)
-        return result
+        return self.manager.get(obj_id)
 
     async def create(self, item_data: Dict):
         """POST /: Create a new instance."""
+        try:
+            max_task = max([x.get("order") for x in self.manager.all()]) + 1
+        except ValueError:
+            max_task = 1 + 1
         item_data.update({"created_at": datetime.now(),
                           "order": max([x.get("order") for x in self.manager.all()]) + 1,
                           "status": 0})
-        result = self.manager.create(**item_data)
-        if not result:
-            raise HTTPException(status_code=400)
-        return result
+        return self.manager.create(**item_data)
 
     async def update(self, obj_id: int, item_data: Dict):
         """PUT /{id}: Update an existing instance by ID."""
-        result = self.manager.update(obj_id, **item_data)
-        if not result:
-            raise HTTPException(status_code=400)
-        return result
+        return self.manager.update(obj_id, **item_data)
 
     async def delete(self, obj_id: int):
         """DELETE /{id}: Delete an instance by ID."""
